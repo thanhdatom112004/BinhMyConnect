@@ -13,6 +13,7 @@ const Review = require("../models/Review");
 const Conversation = require("../models/Conversation");
 const Partnership = require("../models/Partnership");
 const { setTargetRating } = require("../utils/ratings");
+const { listDepartures, durationMinutes } = require("../utils/schedule");
 
 async function reset() {
   await Promise.all([
@@ -411,7 +412,12 @@ async function seed() {
       coverImage: "/img/hero-img-2.jpg",
       price: 650000,
       seats: 16,
+      durationMinutes: 480,
       departureSchedule: "Thứ 7 & Chủ nhật, khởi hành 07:00 tại chợ Bến Thành",
+      departures: [
+        { weekday: 6, time: "07:00" },
+        { weekday: 0, time: "07:00" },
+      ],
       destinations: [farmUtTam._id, farmLan._id, farmBo._id],
       approvalStatus: "approved",
     },
@@ -424,7 +430,9 @@ async function seed() {
       coverImage: "/img/vegetable-item-1.jpg",
       price: 280000,
       seats: 12,
+      durationMinutes: 240,
       departureSchedule: "Sáng thứ 7, 07:30 tại ngã tư Củ Chi",
+      departures: [{ weekday: 6, time: "07:30" }],
       destinations: [farmRau._id, farmUtTam._id],
       approvalStatus: "approved",
     },
@@ -437,7 +445,9 @@ async function seed() {
       coverImage: "/img/banner-fruits.jpg",
       price: 590000,
       seats: 10,
+      durationMinutes: 480,
       departureSchedule: "Chủ nhật, 07:30",
+      departures: [{ weekday: 0, time: "07:30" }],
       destinations: [farmLan._id],
       approvalStatus: "approved",
     },
@@ -452,6 +462,8 @@ async function seed() {
       image: "/img/featur-1.jpg",
       price: 450000,
       priceUnit: "chuyến",
+      seats: 4,
+      durationMinutes: 180,
     },
     {
       business: xeBiz._id,
@@ -461,6 +473,8 @@ async function seed() {
       image: "/img/featur-2.jpg",
       price: 650000,
       priceUnit: "chuyến",
+      seats: 7,
+      durationMinutes: 180,
     },
     {
       business: xeBiz._id,
@@ -470,6 +484,8 @@ async function seed() {
       image: "/img/featur-3.jpg",
       price: 1800000,
       priceUnit: "chuyến",
+      seats: 16,
+      durationMinutes: 240,
     },
   ]);
 
@@ -576,48 +592,60 @@ async function seed() {
     status: "dang_giao",
   });
 
+  const pastVisit = new Date(now - 8 * 86400000);
   await ExperienceBooking.create({
     customer: linh._id,
     farm: farmLan._id,
     farmer: coLan._id,
     packageId: farmLan.packages[0]._id,
     packageName: farmLan.packages[0].name,
-    date: new Date(now - 8 * 86400000),
+    date: pastVisit,
+    startAt: pastVisit,
+    endAt: new Date(pastVisit.getTime() + farmLan.packages[0].durationMinutes * 60000),
     guests: 4,
     phone: linh.phone,
     total: farmLan.packages[0].price * 4,
     status: "hoan_tat",
   });
 
+  const pastTour = new Date(now - 10 * 86400000);
   await TourBooking.create({
     customer: an._id,
     tour: tours[0]._id,
     business: tourBiz._id,
-    date: new Date(now - 10 * 86400000),
+    date: pastTour,
+    startAt: pastTour,
+    endAt: new Date(pastTour.getTime() + durationMinutes(tours[0]) * 60000),
     guests: 2,
     phone: an.phone,
     total: tours[0].price * 2,
     status: "hoan_tat",
   });
 
+  const nextHalfDay = listDepartures(tours[1], 21)[0];
   await TourBooking.create({
     customer: linh._id,
     tour: tours[1]._id,
     business: tourBiz._id,
-    date: new Date(now + 3 * 86400000),
+    date: nextHalfDay.start,
+    startAt: nextHalfDay.start,
+    endAt: nextHalfDay.end,
     guests: 3,
     phone: linh.phone,
     total: tours[1].price * 3,
     status: "cho_xac_nhan",
   });
 
+  const pastRide = new Date(now - 10 * 86400000);
   await VehicleBooking.create({
     customer: an._id,
     vehicle: vehicles[0]._id,
     business: xeBiz._id,
     pickupPoint: "Trung tâm TP.HCM (Quận 1)",
     dropoffPoint: "Xã Bình Mỹ, Củ Chi",
-    pickupTime: new Date(now - 10 * 86400000),
+    pickupTime: pastRide,
+    startAt: pastRide,
+    endAt: new Date(pastRide.getTime() + vehicles[0].durationMinutes * 60000),
     guests: 3,
     phone: an.phone,
     total: vehicles[0].price,

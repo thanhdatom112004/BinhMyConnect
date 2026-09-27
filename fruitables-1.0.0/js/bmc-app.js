@@ -72,34 +72,33 @@
       p._id +
       '"><img src="' +
       esc(src) +
-      '" class="img-fluid w-100 rounded-top" alt="" style="height:220px;object-fit:cover"></a></div>' +
+      '" class="img-fluid w-100 rounded-top bmc-cover" alt=""></a></div>' +
       '<div class="text-white bg-secondary px-3 py-1 rounded position-absolute" style="top: 10px; left: 10px;">' +
       esc(cat) +
       "</div>" +
-      '<div class="p-4 border border-secondary border-top-0 rounded-bottom">' +
-      ' <h4><a class="text-dark" href="shop-detail.html?id=' +
+      '<div class="p-3 p-lg-4 border border-secondary border-top-0 rounded-bottom bmc-card-body">' +
+      '<h4 class="bmc-card-title"><a class="text-dark" href="shop-detail.html?id=' +
       p._id +
       '">' +
       esc(p.name) +
       "</a></h4>" +
-      "<p>" +
-      esc((p.description || "").slice(0, 80)) +
-      (p.description && p.description.length > 80 ? "…" : "") +
+      '<p class="bmc-card-desc">' +
+      esc(p.description || "") +
       "</p>" +
-      '<p class="text-muted small mb-2">' +
+      '<p class="text-muted small bmc-card-meta">' +
       esc(farmName(p)) +
-      " · " +
+      "<br>" +
       stars(p.avgRating) +
       " (" +
       (p.reviewCount || 0) +
       ")</p>" +
-      '<div class="d-flex justify-content-between flex-lg-wrap align-items-center">' +
+      '<div class="bmc-card-buy">' +
       '<p class="text-dark fs-5 fw-bold mb-0">' +
       money(p.price) +
       " / " +
       esc(p.unit) +
       "</p>" +
-      '<button type="button" class="btn border border-secondary rounded-pill px-3 text-primary bmc-add" data-id="' +
+      '<button type="button" class="btn border border-secondary rounded-pill text-primary bmc-add" data-id="' +
       p._id +
       '"><i class="fa fa-shopping-bag me-2 text-primary"></i>Thêm giỏ</button>' +
       "</div></div></div></div>"
@@ -194,10 +193,22 @@
     const mail = document.querySelectorAll(".top-info a")[1];
     if (mail) mail.textContent = "hello@binhmyconnect.vn";
     const topLinks = document.querySelector(".top-link");
+    const sessionUser = API.user();
     if (topLinks) {
-      topLinks.innerHTML =
-        '<a href="login.html" class="text-white"><small class="text-white mx-2">Đăng nhập</small>/</a>' +
-        '<a href="login.html?tab=register" class="text-white"><small class="text-white mx-2">Đăng ký</small></a>';
+      topLinks.innerHTML = sessionUser
+        ? '<a href="account.html" class="text-white"><small class="text-white mx-2">' +
+          esc(authorName(sessionUser)) +
+          '</small>/</a><a href="#" class="text-white" id="bmc-top-logout"><small class="text-white mx-2">Đăng xuất</small></a>'
+        : '<a href="login.html" class="text-white"><small class="text-white mx-2">Đăng nhập</small>/</a>' +
+          '<a href="login.html?tab=register" class="text-white"><small class="text-white mx-2">Đăng ký</small></a>';
+      const logout = document.getElementById("bmc-top-logout");
+      if (logout) {
+        logout.addEventListener("click", function (e) {
+          e.preventDefault();
+          API.logout();
+          location.href = "index.html";
+        });
+      }
     }
     const nav = document.querySelector(".navbar-nav");
     const file = pageName();
@@ -225,13 +236,18 @@
         '">Tin tức</a>' +
         '<div class="nav-item dropdown">' +
         '<a href="#" class="nav-link dropdown-toggle' +
-        (file === "cart.html" || file === "chackout.html" || file === "testimonial.html" ? " active" : "") +
+        (file === "cart.html" || file === "chackout.html" || file === "testimonial.html" || file === "account.html" ? " active" : "") +
         '" data-bs-toggle="dropdown">Tài khoản</a>' +
         '<div class="dropdown-menu m-0 bg-secondary rounded-0">' +
+        '<a href="account.html" class="dropdown-item">Lịch của tôi</a>' +
         '<a href="cart.html" class="dropdown-item">Giỏ hàng</a>' +
         '<a href="chackout.html" class="dropdown-item">Thanh toán</a>' +
         '<a href="testimonial.html" class="dropdown-item">Đánh giá</a>' +
-        '<a href="login.html" class="dropdown-item">Đăng nhập</a>' +
+        '<a href="' +
+        (sessionUser ? "account.html" : "login.html") +
+        '" class="dropdown-item">' +
+        (sessionUser ? "Hồ sơ" : "Đăng nhập") +
+        "</a>" +
         "</div></div>" +
         '<a href="contact.html" class="nav-item nav-link' +
         active("contact.html") +
@@ -244,7 +260,7 @@
     const userIcon = document.querySelector(".fa-user");
     if (userIcon && userIcon.parentElement) {
       const u = API.user();
-      userIcon.parentElement.setAttribute("href", "login.html");
+      userIcon.parentElement.setAttribute("href", u ? "account.html" : "login.html");
       if (u) userIcon.parentElement.title = authorName(u);
     }
     document.querySelectorAll(".footer h1, .footer-item").forEach(function () {});
@@ -266,6 +282,29 @@
     }
     const copy = document.querySelector(".copyright .text-light");
     if (copy) copy.innerHTML = '<span class="text-light">Bình Mỹ Connect — đồ án kết nối nông sản &amp; trải nghiệm</span>';
+
+    const crumbs = {
+      "shop.html": "Nông sản",
+      "shop-detail.html": "Nông sản",
+      "cart.html": "Giỏ hàng",
+      "chackout.html": "Thanh toán",
+      "testimonial.html": "Đánh giá",
+      "contact.html": "Liên hệ",
+      "farms.html": "Nông trại",
+      "farm-detail.html": "Nông trại",
+      "tours.html": "Tour & xe",
+      "news.html": "Tin tức",
+      "login.html": "Đăng nhập",
+      "account.html": "Tài khoản",
+    };
+    const crumb = document.querySelector(".breadcrumb");
+    if (crumb && crumbs[file]) {
+      crumb.innerHTML =
+        '<li class="breadcrumb-item"><a href="index.html">Trang chủ</a></li>' +
+        '<li class="breadcrumb-item active text-white">' +
+        crumbs[file] +
+        "</li>";
+    }
 
     const searchTitle = document.querySelector("#searchModal .modal-title");
     if (searchTitle) searchTitle.textContent = "Tìm nông sản, nông trại, tour";
@@ -293,7 +332,10 @@
     if (heroSearch) {
       heroSearch.type = "search";
       heroSearch.placeholder = "Tìm nông sản, nông trại, tour";
-      const btn = heroSearch.parentElement.querySelector("button");
+      heroSearch.classList.remove("w-75");
+      const wrap = heroSearch.parentElement;
+      wrap.classList.add("bmc-hero-search");
+      const btn = wrap.querySelector("button");
       if (btn) {
         btn.textContent = "Tìm";
         btn.addEventListener("click", function (e) {
@@ -511,7 +553,21 @@
     if (document.querySelector(".fruite h1")) document.querySelector(".fruite h1").textContent = "Nông sản Bình Mỹ";
     if (document.querySelector(".page-header h1")) document.querySelector(".page-header h1").textContent = "Nông sản";
     const searchBox = document.querySelector(".fruite input[type=search]");
-    if (searchBox) searchBox.value = q;
+    if (searchBox) {
+      searchBox.value = q;
+      searchBox.placeholder = "Tìm nông sản";
+    }
+    const sortLabel = document.querySelector('label[for="fruits"]');
+    if (sortLabel) sortLabel.textContent = "Sắp xếp:";
+    const catHeading = document.querySelector(".col-lg-3 h4");
+    if (catHeading) catHeading.textContent = "Danh mục";
+    document.querySelectorAll(".col-lg-3 h4").forEach(function (h) {
+      const label = h.textContent.trim();
+      if (label === "Price" || label === "Additional") {
+        const block = h.closest(".col-lg-12");
+        if (block) block.remove();
+      }
+    });
     const sort = document.getElementById("fruits");
     if (sort) {
       sort.innerHTML =
@@ -943,6 +999,136 @@
     }
   }
 
+  const BOOK_STATUS = {
+    cho_xac_nhan: "Chờ xác nhận",
+    da_xac_nhan: "Đã xác nhận",
+    hoan_tat: "Hoàn tất",
+    huy: "Đã hủy",
+    dang_giao: "Đang giao",
+  };
+
+  function whenLabel(value) {
+    if (!value) return "";
+    return new Date(value).toLocaleString("vi-VN", {
+      weekday: "short",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  function statusPill(status) {
+    const cls = status === "huy" ? "is-cancel" : status === "hoan_tat" ? "is-done" : status === "cho_xac_nhan" ? "is-wait" : "";
+    return '<span class="bmc-pill ' + cls + '">' + esc(BOOK_STATUS[status] || status) + "</span>";
+  }
+
+  function loginNext() {
+    return "login.html?next=" + encodeURIComponent(pageName() + location.search);
+  }
+
+  function phoneValue() {
+    const u = API.user();
+    return (u && u.phone) || "";
+  }
+
+  function experienceModal(farm) {
+    const packages = farm.packages || [];
+    if (!farm.isOpenForVisitors || !packages.length) return "";
+    return (
+      '<div class="modal fade" id="bmcExpModal" tabindex="-1" aria-hidden="true">' +
+      '<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">' +
+      '<div class="modal-content">' +
+      '<div class="modal-header"><h5 class="modal-title">Đăng ký trải nghiệm</h5>' +
+      '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>' +
+      '<div class="modal-body">' +
+      '<p class="text-muted">Giờ mở cửa: ' +
+      esc(farm.openHours) +
+      ". Đặt ngoài khung giờ này sẽ được yêu cầu chọn giờ khác.</p>" +
+      '<form class="bmc-book bmc-exp-form" data-farm="' +
+      farm._id +
+      '">' +
+      '<label class="form-label">Gói trải nghiệm</label>' +
+      '<select name="packageId" class="form-select mb-2 bmc-pkg" required>' +
+      packages
+        .map(function (pk) {
+          return (
+            '<option value="' +
+            pk._id +
+            '" data-max="' +
+            pk.maxGuests +
+            '">' +
+            esc(pk.name) +
+            " — " +
+            money(pk.price) +
+            " · " +
+            pk.durationMinutes +
+            " phút</option>"
+          );
+        })
+        .join("") +
+      "</select>" +
+      '<label class="form-label">Ngày đến</label>' +
+      '<input type="date" name="date" class="form-control mb-2" required>' +
+      '<label class="form-label">Giờ đến</label>' +
+      '<input type="time" name="time" class="form-control mb-2" required>' +
+      '<label class="form-label">Số khách</label>' +
+      '<input type="number" name="guests" class="form-control mb-2 bmc-guests" min="1" max="' +
+      packages[0].maxGuests +
+      '" value="1" required>' +
+      '<label class="form-label">Số điện thoại</label>' +
+      '<input name="phone" class="form-control mb-3" value="' +
+      esc(phoneValue()) +
+      '" required>' +
+      '<button class="btn border border-secondary rounded-pill px-4 text-primary" type="submit">Đăng ký</button>' +
+      '<p class="bmc-msg small mt-2 mb-0"></p></form></div></div></div></div>'
+    );
+  }
+
+  function bindBookingForms(root) {
+    root.querySelectorAll("form.bmc-book").forEach(function (form) {
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const msg = form.querySelector(".bmc-msg");
+        if (msg) msg.textContent = "";
+        if (!API.token()) {
+          location.href = loginNext();
+          return;
+        }
+        const data = Object.fromEntries(new FormData(form).entries());
+        try {
+          if (form.classList.contains("bmc-exp-form")) {
+            await API.bookFarm(form.getAttribute("data-farm"), data);
+          } else if (form.classList.contains("bmc-tour-form")) {
+            await API.bookTour(form.getAttribute("data-tour"), {
+              date: data.date,
+              guests: Number(data.guests),
+              phone: data.phone,
+            });
+          } else if (form.classList.contains("bmc-vehicle-form")) {
+            await API.bookVehicle(form.getAttribute("data-vehicle"), {
+              pickupPoint: data.pickupPoint,
+              dropoffPoint: data.dropoffPoint,
+              pickupTime: data.pickupTime,
+              guests: Number(data.guests),
+              phone: data.phone,
+            });
+          }
+          if (msg) {
+            msg.className = "bmc-msg small mt-2 mb-0 text-success";
+            msg.innerHTML = 'Đã ghi nhận lịch. <a href="account.html">Xem và hủy trong tài khoản</a> nếu muốn đổi giờ.';
+          }
+        } catch (err) {
+          if (msg) {
+            msg.className = "bmc-msg small mt-2 mb-0 text-danger";
+            msg.textContent = err.message;
+          }
+        }
+      });
+    });
+  }
+
   async function fillFarms() {
     const res = await API.farms();
     const grid = document.getElementById("bmc-grid");
@@ -984,17 +1170,22 @@
       "</p><p>Dịch vụ: " +
       esc((farm.onSiteServices || []).join(", ")) +
       "</p>" +
-      (farm.isOpenForVisitors ? "<p class='text-success'>Đang mở đón khách</p>" : "<p class='text-danger'>Chưa mở đón khách</p>") +
+      (farm.isOpenForVisitors
+        ? '<p class="text-success mb-2">Đang mở đón khách</p>' +
+          ((farm.packages || []).length
+            ? '<button type="button" class="btn border border-secondary rounded-pill px-4 text-primary" data-bs-toggle="modal" data-bs-target="#bmcExpModal">Đăng ký trải nghiệm</button>'
+            : '<p class="text-muted mb-0">Chưa có gói để đăng ký.</p>')
+        : '<p class="text-danger mb-0">Chưa mở đón khách</p>') +
       "</div></div>" +
       "<h3 class='mt-5'>Gói trải nghiệm</h3><div class='row g-4'>" +
       (farm.packages || [])
         .map(function (pk) {
           return (
-            '<div class="col-md-4"><div class="p-4 bg-light rounded"><h5>' +
+            '<div class="col-md-6 col-lg-4"><div class="bmc-card p-4 h-100"><h5>' +
             esc(pk.name) +
             "</h5><p>" +
             esc(pk.description || "") +
-            "</p><p>" +
+            "</p><p class='mb-0'>" +
             money(pk.price) +
             " · tối đa " +
             pk.maxGuests +
@@ -1014,18 +1205,57 @@
           return '<p><a href="tours.html">' + esc(t.title) + "</a> — " + money(t.price) + "</p>";
         })
         .join("") || "<p>Chưa có tour.</p>");
+    const previous = document.getElementById("bmcExpModal");
+    if (previous) previous.remove();
+    const holder = document.createElement("div");
+    holder.innerHTML = experienceModal(farm);
+    const modal = holder.firstElementChild;
+    if (modal) document.body.appendChild(modal);
+    bindBookingForms(modal || root);
+    const pkgSelect = document.querySelector("#bmcExpModal .bmc-pkg");
+    const guests = document.querySelector("#bmcExpModal .bmc-guests");
+    if (pkgSelect && guests) {
+      pkgSelect.addEventListener("change", function () {
+        const max = Number(pkgSelect.selectedOptions[0].getAttribute("data-max") || 1);
+        guests.max = String(max);
+        if (Number(guests.value) > max) guests.value = String(max);
+      });
+    }
   }
 
   async function fillTours() {
     const [tours, vehicles] = await Promise.all([API.tours(), API.vehicles()]);
     const grid = document.getElementById("bmc-grid");
     if (!grid) return;
+    const slots = function (tour) {
+      const list = tour.nextDepartures || [];
+      if (!list.length) return '<p class="text-muted">Chưa có chuyến sắp tới.</p>';
+      return (
+        '<label class="form-label">Chuyến</label><select name="date" class="form-select mb-2" required><option value="">Chọn chuyến</option>' +
+        list
+          .map(function (slot) {
+            const full = slot.seatsLeft <= 0;
+            return (
+              '<option value="' +
+              slot.startAt +
+              '"' +
+              (full ? " disabled" : "") +
+              ">" +
+              esc(slot.label) +
+              (full ? " — hết chỗ" : " — còn " + slot.seatsLeft + " chỗ") +
+              "</option>"
+            );
+          })
+          .join("") +
+        "</select>"
+      );
+    };
     grid.innerHTML =
-      "<div class='col-12'><h2>Tour trải nghiệm</h2></div>" +
+      "<div class='col-12'><h2>Tour trải nghiệm</h2><p class='text-muted'>Mỗi tài khoản không đặt trùng khung giờ. Nếu đã có chuyến, hãy hủy trong tài khoản hoặc chọn giờ khác.</p></div>" +
       (tours.data || [])
         .map(function (t) {
           return (
-            '<div class="col-md-6 col-lg-4"><div class="rounded border p-0 overflow-hidden h-100">' +
+            '<div class="col-md-6 col-lg-4"><div class="bmc-card">' +
             '<img src="' +
             esc(img(t.coverImage)) +
             '" class="img-fluid w-100" style="height:200px;object-fit:cover">' +
@@ -1039,31 +1269,60 @@
             esc(t.departureSchedule) +
             "</p><p>" +
             money(t.price) +
-            " · " +
+            " / khách · " +
             t.seats +
             " chỗ</p><p>" +
             stars(t.avgRating) +
-            "</p></div></div></div>"
+            '</p><form class="bmc-book bmc-tour-form mt-3" data-tour="' +
+            t._id +
+            '">' +
+            slots(t) +
+            '<label class="form-label">Số khách</label><input type="number" name="guests" class="form-control mb-2" min="1" max="' +
+            t.seats +
+            '" value="1" required>' +
+            '<label class="form-label">Số điện thoại</label><input name="phone" class="form-control mb-3" value="' +
+            esc(phoneValue()) +
+            '" required>' +
+            '<button class="btn border border-secondary rounded-pill px-3 text-primary" type="submit">Đặt tour</button>' +
+            '<p class="bmc-msg small mt-2 mb-0"></p></form></div></div></div>'
           );
         })
         .join("") +
-      "<div class='col-12 mt-4'><h2>Đặt xe nội vùng</h2></div>" +
+      "<div class='col-12 mt-4'><h2>Đặt xe nội vùng</h2><p class='text-muted'>Xe đã có chuyến trùng giờ thì chọn giờ khác. Lịch của bạn cũng không được chồng lên tour hoặc trải nghiệm.</p></div>" +
       (vehicles.data || [])
         .map(function (v) {
           const type = { xe_4_cho: "Xe 4 chỗ", xe_7_cho: "Xe 7 chỗ", dua_don_nhom: "Đưa đón nhóm" }[v.vehicleType];
           return (
-            '<div class="col-md-4"><div class="p-4 bg-light rounded"><h5>' +
+            '<div class="col-md-6 col-lg-4"><div class="bmc-card p-4"><h5>' +
             esc(v.name) +
             "</h5><p>" +
-            esc(type) +
-            "</p><p>" +
+            esc(type || "") +
+            " · " +
+            (v.seats || "") +
+            " chỗ · " +
+            (v.durationMinutes || 180) +
+            " phút</p><p>" +
             money(v.price) +
             " / " +
             esc(v.priceUnit) +
-            "</p></div></div>"
+            '</p><form class="bmc-book bmc-vehicle-form" data-vehicle="' +
+            v._id +
+            '">' +
+            '<label class="form-label">Điểm đón</label><input name="pickupPoint" class="form-control mb-2" required>' +
+            '<label class="form-label">Điểm trả</label><input name="dropoffPoint" class="form-control mb-2" value="Xã Bình Mỹ, Củ Chi" required>' +
+            '<label class="form-label">Giờ đón</label><input type="datetime-local" name="pickupTime" class="form-control mb-2" required>' +
+            '<label class="form-label">Số khách</label><input type="number" name="guests" class="form-control mb-2" min="1" max="' +
+            (v.seats || 4) +
+            '" value="1" required>' +
+            '<label class="form-label">Số điện thoại</label><input name="phone" class="form-control mb-3" value="' +
+            esc(phoneValue()) +
+            '" required>' +
+            '<button class="btn border border-secondary rounded-pill px-3 text-primary" type="submit">Đặt xe</button>' +
+            '<p class="bmc-msg small mt-2 mb-0"></p></form></div></div>'
           );
         })
         .join("");
+    bindBookingForms(grid);
   }
 
   async function fillNews() {
@@ -1131,7 +1390,8 @@
       e.preventDefault();
       try {
         await API.login(document.getElementById("bmc-email").value, document.getElementById("bmc-password").value);
-        location.href = "index.html";
+        const next = new URLSearchParams(location.search).get("next");
+        location.href = next && /^[\w.-]+\.html(\?.*)?$/.test(next) ? next : "account.html";
       } catch (err) {
         alert(err.message);
       }
@@ -1152,12 +1412,144 @@
             area: document.getElementById("bmc-reg-area").value,
             hamlet: document.getElementById("bmc-reg-area").value,
           });
-          location.href = "index.html";
+          location.href = "account.html";
         } catch (err) {
           alert(err.message);
         }
       });
     }
+  }
+
+  function bookingCard(title, when, extra, status, kind, id, canCancel) {
+    return (
+      '<div class="col-md-6"><div class="bmc-card p-4 h-100"><div class="d-flex justify-content-between align-items-start mb-2"><h5 class="mb-0">' +
+      esc(title) +
+      "</h5>" +
+      statusPill(status) +
+      "</div><p class='mb-1'>" +
+      esc(when) +
+      "</p><p class='mb-3'>" +
+      extra +
+      "</p>" +
+      (canCancel
+        ? '<button type="button" class="btn border border-secondary rounded-pill px-3 text-primary bmc-cancel" data-kind="' +
+          kind +
+          '" data-id="' +
+          id +
+          '">Hủy lịch</button>'
+        : "") +
+      "</div></div>"
+    );
+  }
+
+  async function fillAccount() {
+    const root = document.getElementById("bmc-account");
+    if (!root) return;
+    if (!API.token()) {
+      root.innerHTML = '<p>Hãy <a href="login.html?next=account.html">đăng nhập</a> để xem lịch tour, xe và trải nghiệm.</p>';
+      return;
+    }
+    const me = await API.me();
+    const user = me.user || API.user();
+    const [tours, vehicles, experiences, orders] = await Promise.all([
+      API.myTours(),
+      API.myVehicles(),
+      API.myExperiences(),
+      API.myOrders().catch(function () {
+        return { data: [] };
+      }),
+    ]);
+    const canCancel = function (status) {
+      return user.role === "customer" && (status === "cho_xac_nhan" || status === "da_xac_nhan");
+    };
+    const section = function (title, html) {
+      return '<h3 class="mt-4 mb-3">' + title + "</h3><div class='row g-4'>" + (html || '<p class="px-3">Chưa có lịch.</p>') + "</div>";
+    };
+    root.innerHTML =
+      '<div class="bmc-card p-4 mb-2"><h2 class="mb-1">' +
+      esc(authorName(user)) +
+      "</h2><p class='mb-0'>" +
+      esc(ROLE[user.role] || user.role) +
+      " · " +
+      esc(user.email) +
+      (user.phone ? " · " + esc(user.phone) : "") +
+      '</p><p class="mt-3 mb-0"><a href="tours.html">Đặt tour hoặc xe</a> · <a href="farms.html">Đăng ký trải nghiệm</a></p></div>' +
+      section(
+        "Tour đã đặt",
+        (tours.data || [])
+          .map(function (item) {
+            const tour = item.tour || {};
+            return bookingCard(
+              tour.title || "Tour",
+              whenLabel(item.startAt || item.date),
+              esc(item.guests + " khách · " + money(item.total)),
+              item.status,
+              "tours",
+              item._id,
+              canCancel(item.status)
+            );
+          })
+          .join("")
+      ) +
+      section(
+        "Xe đã đặt",
+        (vehicles.data || [])
+          .map(function (item) {
+            const vehicle = item.vehicle || {};
+            return bookingCard(
+              vehicle.name || "Xe",
+              whenLabel(item.startAt || item.pickupTime),
+              esc((item.pickupPoint || "") + " → " + (item.dropoffPoint || "")),
+              item.status,
+              "vehicles",
+              item._id,
+              canCancel(item.status)
+            );
+          })
+          .join("")
+      ) +
+      section(
+        "Trải nghiệm đã đăng ký",
+        (experiences.data || [])
+          .map(function (item) {
+            const farm = item.farm || {};
+            return bookingCard(
+              (item.packageName || "Trải nghiệm") + (farm.name ? " · " + farm.name : ""),
+              whenLabel(item.startAt || item.date),
+              esc(item.guests + " khách · " + money(item.total)),
+              item.status,
+              "experiences",
+              item._id,
+              canCancel(item.status)
+            );
+          })
+          .join("")
+      ) +
+      section(
+        "Đơn nông sản",
+        (orders.data || [])
+          .map(function (order) {
+            const names = (order.items || [])
+              .map(function (item) {
+                return item.name || (item.product && item.product.name) || "";
+              })
+              .filter(Boolean)
+              .join(", ");
+            return bookingCard(names || "Đơn hàng", whenLabel(order.createdAt), esc(money(order.total)), order.status, "", "", false);
+          })
+          .join("")
+      );
+    root.querySelectorAll(".bmc-cancel").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        if (!confirm("Hủy lịch này để đặt khung giờ khác?")) return;
+        try {
+          await API.setBookingStatus(btn.getAttribute("data-kind"), btn.getAttribute("data-id"), "huy");
+          await fillAccount();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+    });
   }
 
   function listPageShellNeeded() {
@@ -1181,6 +1573,7 @@
       else if (p === "tours.html") await fillTours();
       else if (p === "news.html") await fillNews();
       else if (p === "login.html") fillLogin();
+      else if (p === "account.html") await fillAccount();
     } catch (e) {
       console.error(e);
     }

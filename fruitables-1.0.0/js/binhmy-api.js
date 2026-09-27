@@ -116,6 +116,33 @@
     sendMessage: function (body) {
       return request("/messages", { method: "POST", body: JSON.stringify(body) });
     },
+    bookFarm: function (id, body) {
+      return request("/farms/" + id + "/book", { method: "POST", body: JSON.stringify(body) });
+    },
+    bookTour: function (id, body) {
+      return request("/tours/" + id + "/book", { method: "POST", body: JSON.stringify(body) });
+    },
+    bookVehicle: function (id, body) {
+      return request("/vehicles/" + id + "/book", { method: "POST", body: JSON.stringify(body) });
+    },
+    myOrders: function () {
+      return request("/orders/products");
+    },
+    myExperiences: function () {
+      return request("/orders/experiences");
+    },
+    myTours: function () {
+      return request("/orders/tours");
+    },
+    myVehicles: function () {
+      return request("/orders/vehicles");
+    },
+    setBookingStatus: function (kind, id, status) {
+      return request("/orders/" + kind + "/" + id + "/status", {
+        method: "PATCH",
+        body: JSON.stringify({ status: status }),
+      });
+    },
     token: function () {
       return localStorage.getItem("bmc_token");
     },

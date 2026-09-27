@@ -62,6 +62,28 @@ function bookingFilter(user, customerField, ownerField) {
   return { _id: null };
 }
 
+async function updateBooking(Model, id, user, ownerField, next) {
+  const allowed = ["cho_xac_nhan", "da_xac_nhan", "hoan_tat", "huy"];
+  if (!allowed.includes(next)) throw new ApiError(400, "Trạng thái không hợp lệ");
+  const booking = await Model.findById(id);
+  if (!booking) throw new ApiError(404, "Không tìm thấy lịch đặt");
+  if (user.role === "customer") {
+    if (booking.customer.toString() !== user._id.toString()) throw new ApiError(403, "Không phải lịch của bạn");
+    if (next !== "huy") throw new ApiError(400, "Bạn chỉ được hủy lịch của mình");
+    if (booking.status === "hoan_tat") throw new ApiError(400, "Lịch đã hoàn tất, không hủy được");
+    booking.status = "huy";
+    await booking.save();
+    return booking;
+  }
+  if (user.role !== "admin" && booking[ownerField].toString() !== user._id.toString()) {
+    throw new ApiError(403, "Không thuộc đơn vị của bạn");
+  }
+  if (!["farmer", "business", "admin"].includes(user.role)) throw new ApiError(403, "Không đủ quyền");
+  booking.status = next;
+  await booking.save();
+  return booking;
+}
+
 router.get(
   "/experiences",
   authenticate,
@@ -78,15 +100,8 @@ router.get(
 router.patch(
   "/experiences/:id/status",
   authenticate,
-  authorize("farmer", "admin"),
   asyncHandler(async (req, res) => {
-    const booking = await ExperienceBooking.findById(req.params.id);
-    if (!booking) throw new ApiError(404, "Không tìm thấy đặt chỗ");
-    if (req.user.role === "farmer" && booking.farmer.toString() !== req.user._id.toString()) {
-      throw new ApiError(403, "Không thuộc hộ của bạn");
-    }
-    booking.status = req.body.status;
-    await booking.save();
+    const booking = await updateBooking(ExperienceBooking, req.params.id, req.user, "farmer", req.body.status);
     res.json({ success: true, data: booking });
   })
 );
@@ -107,15 +122,8 @@ router.get(
 router.patch(
   "/tours/:id/status",
   authenticate,
-  authorize("business", "admin"),
   asyncHandler(async (req, res) => {
-    const booking = await TourBooking.findById(req.params.id);
-    if (!booking) throw new ApiError(404, "Không tìm thấy đặt tour");
-    if (req.user.role === "business" && booking.business.toString() !== req.user._id.toString()) {
-      throw new ApiError(403, "Không thuộc đơn vị của bạn");
-    }
-    booking.status = req.body.status;
-    await booking.save();
+    const booking = await updateBooking(TourBooking, req.params.id, req.user, "business", req.body.status);
     res.json({ success: true, data: booking });
   })
 );
@@ -136,15 +144,8 @@ router.get(
 router.patch(
   "/vehicles/:id/status",
   authenticate,
-  authorize("business", "admin"),
   asyncHandler(async (req, res) => {
-    const booking = await VehicleBooking.findById(req.params.id);
-    if (!booking) throw new ApiError(404, "Không tìm thấy đặt xe");
-    if (req.user.role === "business" && booking.business.toString() !== req.user._id.toString()) {
-      throw new ApiError(403, "Không thuộc đơn vị của bạn");
-    }
-    booking.status = req.body.status;
-    await booking.save();
+    const booking = await updateBooking(VehicleBooking, req.params.id, req.user, "business", req.body.status);
     res.json({ success: true, data: booking });
   })
 );

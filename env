@@ -1,0 +1,5 @@
+PORT=5000
+MONGODB_URI=mongodb+srv://thanhdatom112004:Co0935166536@onlinelearningweb.2el7q2u.mongodb.net/binhmyconnect?retryWrites=true&w=majority&appName=OnlineLearningWeb
+JWT_SECRET=truongdaihochutech
+JWT_EXPIRES_IN=7d
+CLIENT_ORIGIN=*

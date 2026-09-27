@@ -6,6 +6,8 @@ const { ExperienceBooking } = require("../models/Booking");
 const { authenticate, authorize } = require("../middleware/auth");
 const { asyncHandler } = require("../utils/asyncHandler");
 const { ApiError } = require("../utils/apiError");
+const { combineDateTime, assertWithinOpenHours } = require("../utils/schedule");
+const { assertCustomerFree } = require("../utils/bookingGuard");
 
 const router = express.Router();
 
@@ -137,19 +139,34 @@ router.post(
     }
     const pkg = farm.packages.id(req.body.packageId);
     if (!pkg || !pkg.isActive) throw new ApiError(400, "Gói trải nghiệm không hợp lệ");
-    if (req.body.guests > pkg.maxGuests) {
+    const guests = Number(req.body.guests || 1);
+    if (!Number.isInteger(guests) || guests < 1 || guests > pkg.maxGuests) {
       throw new ApiError(400, `Gói này tối đa ${pkg.maxGuests} khách`);
     }
+    const start = combineDateTime(req.body.date, req.body.time);
+    if (!start) throw new ApiError(400, "Chọn ngày và giờ đến");
+    if (start.getTime() <= Date.now()) throw new ApiError(400, "Không đặt giờ đã qua. Hãy đặt giờ khác.");
+    const end = new Date(start.getTime() + (pkg.durationMinutes || 60) * 60000);
+    try {
+      assertWithinOpenHours(farm.openHours, start, end);
+    } catch (err) {
+      throw new ApiError(400, err.message);
+    }
+    const phone = String(req.body.phone || req.user.phone || "").trim();
+    if (!phone) throw new ApiError(400, "Cần số điện thoại");
+    await assertCustomerFree(req.user._id, start, end);
     const booking = await ExperienceBooking.create({
       customer: req.user._id,
       farm: farm._id,
       farmer: farm.owner,
       packageId: pkg._id,
       packageName: pkg.name,
-      date: req.body.date,
-      guests: req.body.guests,
-      phone: req.body.phone || req.user.phone,
-      total: pkg.price * Number(req.body.guests || 1),
+      date: start,
+      startAt: start,
+      endAt: end,
+      guests,
+      phone,
+      total: pkg.price * guests,
     });
     res.status(201).json({ success: true, data: booking });
   })

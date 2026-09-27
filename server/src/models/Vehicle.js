@@ -13,6 +13,8 @@ const vehicleSchema = new mongoose.Schema(
     image: { type: String, default: "/img/featur-1.jpg" },
     price: { type: Number, required: true, min: 0 },
     priceUnit: { type: String, default: "chuyến" },
+    seats: { type: Number, default: 4, min: 1 },
+    durationMinutes: { type: Number, default: 180, min: 30 },
     isActive: { type: Boolean, default: true },
     avgRating: { type: Number, default: 0 },
     reviewCount: { type: Number, default: 0 },
