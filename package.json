@@ -1,0 +1,22 @@
+{
+  "name": "binhmy-connect",
+  "version": "1.0.0",
+  "description": "Bình Mỹ Connect — kết nối nông dân, khách hàng và doanh nghiệp dịch vụ nông nghiệp trải nghiệm",
+  "main": "server/src/index.js",
+  "scripts": {
+    "start": "node server/src/index.js",
+    "dev": "node --watch server/src/index.js",
+    "seed": "node server/src/seed/seed.js"
+  },
+  "keywords": ["binh-my", "cu-chi", "nong-san", "nodejs", "mongodb"],
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.1",
+    "morgan": "^1.10.0"
+  }
+}
